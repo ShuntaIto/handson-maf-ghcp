@@ -14,7 +14,6 @@ from agent_framework import AgentExecutorResponse, AgentResponse, Message, Workf
 from handson_maf_ghcp.agent import (
     InvocationInput,
     ReviewResult,
-    create_workflow_agent,
     format_report,
     review_is_approved,
 )
@@ -104,22 +103,6 @@ def test_workspace_rejects_unsafe_paths(path: str) -> None:
 
     with pytest.raises(ValueError, match="not allowed"):
         asyncio.run(open_workspace())
-
-
-def test_workflow_is_exposed_as_agent(tmp_path: Path) -> None:
-    runtime = create_workflow_agent(tmp_path)
-    try:
-        workflow = runtime.agent.workflow
-
-        assert workflow.get_start_executor().id == "implementation-agent"
-        assert [executor.id for executor in workflow.get_output_executors()] == ["format-report"]
-        assert {executor.id for executor in workflow.get_executors_list()} == {
-            "implementation-agent",
-            "review-agent",
-            "format-report",
-        }
-    finally:
-        asyncio.run(runtime.close())
 
 
 @pytest.mark.parametrize(

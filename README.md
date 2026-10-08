@@ -1,8 +1,6 @@
 # Implementation Hypothesis Agent
 
-自然言語の実装仮説を受け取り、隔離された一時ディレクトリを仮の
-リポジトリとして実装・検証・レビューする Microsoft Agent Framework
-workflow です。GitHub のリポジトリは取得しません。
+自然言語の実装仮説を受け取り、隔離された一時ディレクトリを仮のリポジトリとして実装・検証・レビューするMicrosoft Agent Framework workflowです。GitHubのリポジトリは取得しません。
 
 ## Workflow
 
@@ -21,40 +19,39 @@ implementation-agent (GitHubCopilotAgent)
  Invocations API response
 ```
 
-各 invocation は次の順序で処理されます。
+各invocationは次の順序で処理されます。
 
-1. invocation 専用の `TemporaryDirectory` を作成する
-2. API で受け取った補助ファイルを安全に展開する
-3. ローカル Git リポジトリを初期化し、入力ファイルを baseline commit にする
-4. GitHub Copilot が実装仮説を実装・検証する
-5. `Agent` が差分とテストを確認し、Pydantic structured output で判定する
-6. `changes_requested` なら実装エージェントへ差し戻す
-7. `approved` ならレポートを整形する
+1. invocation専用の`TemporaryDirectory`を作成する
+2. APIで受け取った補助ファイルを安全に展開する
+3. ローカルGitリポジトリを初期化し、入力ファイルをbaseline commitにする
+4. GitHub Copilotが実装仮説を実装・検証する
+5. `Agent`が差分とテストを確認し、Pydantic structured outputで判定する
+6. `changes_requested`なら実装エージェントへ差し戻す
+7. `approved`ならレポートを整形する
 8. 既定では一時ディレクトリを削除する
-9. `persist_workspace=true` の場合だけ、ソースを ZIP 化して Base64 で返す
+9. `persist_workspace=true`の場合だけ、ソースをZIP化してBase64で返す
 
-ZIP には実装成果物を含め、内部用の `.git`、`__pycache__`、
-`.pytest_cache` は含めません。既定の ZIP 上限は 10 MiB です。
+ZIPには実装成果物を含め、内部用の`.git`、`__pycache__`、`.pytest_cache`は含めません。既定のZIP上限は10 MiBです。
 
 ## ファイル構成
 
 | ファイル | 役割 |
 | --- | --- |
-| [`src/handson_maf_ghcp/agent.py`](./src/handson_maf_ghcp/agent.py) | API モデル、実装・レビューエージェント、workflow、レポート整形 |
-| [`src/handson_maf_ghcp/workspace.py`](./src/handson_maf_ghcp/workspace.py) | 一時リポジトリの作成・削除、ファイル一覧、ZIP 化、レビュー用ツール |
-| [`run.py`](./run.py) | 1 個の仮説をローカルで一度だけ実行 |
-| [`main.py`](./main.py) | Invocations API としてサーブ |
+| [`src/handson_maf_ghcp/agent.py`](./src/handson_maf_ghcp/agent.py) | APIモデル、実装・レビューエージェント、workflow、レポート整形 |
+| [`src/handson_maf_ghcp/workspace.py`](./src/handson_maf_ghcp/workspace.py) | 一時リポジトリの作成・削除、ファイル一覧、ZIP化、レビュー用ツール |
+| [`run.py`](./run.py) | 1個の仮説をローカルで一度だけ実行 |
+| [`main.py`](./main.py) | Invocations APIとしてサーブ |
 
 ## API
 
-サーバーは Invocations protocol 2.0 を使用し、`POST /invocations` を提供します。
+サーバーはInvocations protocol 2.0を使用し、`POST /invocations`を提供します。
 
 ### Request
 
 ```json
 {
   "hypothesis": "キャッシュを追加して重複計算を削減する",
-  "supplemental_context": "Python 3.12 を対象にする",
+  "supplemental_context": "Python 3.12を対象にする",
   "metadata": {
     "experiment": "cache-v1"
   },
@@ -74,19 +71,17 @@ ZIP には実装成果物を含め、内部用の `.git`、`__pycache__`、
 }
 ```
 
-`hypothesis` の代わりに `prompt` または `message` も受け付けます。
-JSON string 自体を実装仮説として送ることもできます。
+`hypothesis`の代わりに`prompt`または`message`も受け付けます。JSON string自体を実装仮説として送ることもできます。
 
 | フィールド | 必須 | 説明 |
 | --- | --- | --- |
 | `hypothesis` | Yes | 自然言語の実装仮説 |
 | `supplemental_context` | No | 制約や前提などの補助情報 |
-| `metadata` | No | workflow へ渡す任意の JSON metadata |
+| `metadata` | No | workflowへ渡す任意のJSON metadata |
 | `files` | No | 一時リポジトリの初期ファイル |
-| `persist_workspace` | No | `true` のときだけ最終 workspace ZIP を返す。既定は `false` |
+| `persist_workspace` | No | `true`のときだけ最終workspace ZIPを返す。既定は`false` |
 
-ファイルパスは一時 workspace 内に制限され、absolute path や `..` による
-workspace 外への書き込みは拒否されます。
+ファイルパスは一時workspace内に制限され、absolute pathや`..`によるworkspace外への書き込みは拒否されます。
 
 ### Response
 
@@ -112,7 +107,7 @@ workspace 外への書き込みは拒否されます。
 }
 ```
 
-`persist_workspace=false` の場合、`workspace_archive` は `null` です。
+`persist_workspace=false`の場合、`workspace_archive`は`null`です。
 
 ## ローカル実行
 
@@ -122,30 +117,26 @@ az login
 cp .env.example .env
 
 uv run python run.py \
-  "Python で LRU キャッシュの実装パターンを検証する"
+  "PythonでLRUキャッシュの実装パターンを検証する"
 ```
 
-`run.py` と pytest は起動時に `.env` を読み込みます（`python-dotenv`、dev 依存）。
-`.env` の値は既存の環境変数を上書きしません。Hosted Agent は `.env` を読まず、
-設定は `azure.yaml` から渡されます。`.env` は Git、コンテナ image、agent の
-デプロイパッケージのいずれにも含まれません。
+`run.py`とpytestは起動時に`.env`を読み込みます（`python-dotenv`、dev依存）。`.env`の値は既存の環境変数を上書きしません。Hosted Agentは`.env`を読まず、設定は`azure.yaml`から渡されます。`.env`はGit、コンテナimage、agentのデプロイパッケージのいずれにも含まれません。
 
-ZIP も取得する場合:
+ZIPも取得する場合:
 
 ```bash
 uv run python run.py --persist-workspace "実装仮説"
 ```
 
-補助ファイルを含む構造化入力では、Invocations API と同じ JSON を使用します。
+補助ファイルを含む構造化入力では、Invocations APIと同じJSONを使用します。
 
 ```bash
 uv run python run.py --request request.json
 ```
 
-## ローカル Invocations API
+## ローカルInvocations API
 
-`main.py` はコンテナでも使う本番用エントリポイントのため dotenv に依存させず、
-ローカルでは uv の `--env-file` で `.env` を渡します。
+`main.py`はコンテナでも使う本番用エントリポイントのためdotenvに依存させず、ローカルではuvの`--env-file`で`.env`を渡します。
 
 ```bash
 uv run --env-file .env python main.py
@@ -185,9 +176,7 @@ az login
 azd auth login
 ```
 
-初期化時は既存 project と model deployment を指定します。workspace の
-Git 初期化と Copilot runtime の事前配置が必要なため、Dockerfile を使用する
-container deployment とします。
+初期化時は既存projectとmodel deploymentを指定します。workspaceのGit初期化とCopilot runtimeの事前配置が必要なため、Dockerfileを使用するcontainer deploymentとします。
 
 ```bash
 PROJECT_ID="$(
@@ -213,8 +202,7 @@ azd env set AZURE_TOKEN_CREDENTIALS "ManagedIdentityCredential"
 azd up
 ```
 
-初回の container deployment では ACR も provision されます。デプロイ後、
-Hosted Agent の Managed Identity にモデル推論ロールを付与します。
+初回のcontainer deploymentではACRもprovisionされます。デプロイ後、Hosted AgentのManaged Identityにモデル推論ロールを付与します。
 
 ```bash
 AGENT_PRINCIPAL_ID="$(
@@ -236,7 +224,7 @@ az role assignment create \
   --scope "$FOUNDRY_SCOPE"
 ```
 
-構造化 request はファイルで渡します。
+構造化requestはファイルで渡します。
 
 ```bash
 azd ai agent invoke \
@@ -252,25 +240,59 @@ azd ai agent invoke \
 | 環境変数 | 既定値 | 用途 |
 | --- | --- | --- |
 | `FOUNDRY_RESOURCE_URL` | `https://mf-foundry-book.openai.azure.com` | Copilot BYOK endpoint |
-| `FOUNDRY_PROJECT_ENDPOINT` | `https://mf-foundry-book.services.ai.azure.com/api/projects/first-project` | review agent の Foundry project |
+| `FOUNDRY_PROJECT_ENDPOINT` | `https://mf-foundry-book.services.ai.azure.com/api/projects/first-project` | review agentのFoundry project |
 | `FOUNDRY_MODEL_DEPLOYMENT_NAME` | `gpt-6-luna` | model deployment |
-| `AZURE_TOKEN_CREDENTIALS` | DefaultAzureCredential chain | ローカルまたは Managed Identity |
+| `AZURE_TOKEN_CREDENTIALS` | DefaultAzureCredential chain | ローカルまたはManaged Identity |
 | `AGENT_TIMEOUT_SECONDS` | `900` | Copilot request timeout |
-| `WORKFLOW_MAX_ITERATIONS` | `12` | workflow の最大 superstep 数 |
+| `WORKFLOW_MAX_ITERATIONS` | `12` | workflowの最大superstep数 |
 
-コマンド timeout や ZIP 上限などの細かな値は、
-[`workspace.py`](./src/handson_maf_ghcp/workspace.py) 冒頭の定数で定義しています。
+コマンドtimeoutやZIP上限などの細かな値は、[`workspace.py`](./src/handson_maf_ghcp/workspace.py)冒頭の定数で定義しています。
+
+## WSL2上でDocker Engineを使う
+
+mediumテストやローカルでのコンテナ確認にはDockerが必要です。ここではWSL2を使ってWindowsでDockerを動かすのではなく、WSL2上でDockerを使うための手順を示します（つまり軽量LinuxコンテナであるWSL2のさらに上でコンテナを動かす二重コンテナ）。
+
+参考: [Install Docker Engine on Debian](https://docs.docker.com/engine/install/debian/#installation-methods)
+
+```bash
+sudo apt-get update
+sudo apt-get install ca-certificates curl gnupg lsb-release
+sudo mkdir -m 0755 -p /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+echo \
+"deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+$(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+sudo apt-get update
+sudo apt install docker-ce docker-ce-cli containerd.io docker-compose-plugin
+```
+
+dockerサービスを再起動します（2025/07/10現在、WSL2でもデフォルトでサービスを使えるようになっています）。
+
+```bash
+sudo service docker restart
+```
+
+sudoなしでdockerを使用できるよう権限を調整します。
+
+```bash
+sudo usermod -aG docker $USER
+```
+
+保存後、Windows側で`wsl --shutdown`を実行してWSLを再起動します。再起動後、dockerサービスを起動します。
+
+```bash
+sudo service docker start
+```
 
 ## Validation
 
-Google のテストサイズ分類（small / medium / large）に沿って、テストを
-`tests/` 以下の3ディレクトリに分けています。
+テストサイズごとの分類（small / medium / large）に沿って、テストを`tests/`以下の3ディレクトリに分けています。
 
 | サイズ | ディレクトリ | 内容 | 外部依存 | 所要時間 |
 | --- | --- | --- | --- | --- |
-| small | [`tests/small`](./tests/small) | 単一プロセス内で入力モデル、一時 workspace、ZIP、workflow 構成、レビュー分岐、レポート整形を検証 | なし | 1 秒未満 |
-| medium | [`tests/medium`](./tests/medium) | コンテナを build・起動し、localhost 経由で readiness、OpenAPI、入力検証、`git` と Copilot runtime の同梱を検証。モデルは呼ばない | Docker | 約 3 分 |
-| large | [`tests/large`](./tests/large) | デプロイ済み Hosted Agent を呼び、実装・レビュー・承認・ZIP 返却までを検証 | Azure, モデル課金 | 約 5 分 |
+| small | [`tests/small`](./tests/small) | 単一プロセス内で入力モデル、一時workspace、ZIP、workflow構成、レビュー分岐、レポート整形を検証 | なし | 1秒未満 |
+| medium | [`tests/medium`](./tests/medium) | コンテナをbuild・起動し、localhost経由でreadiness、OpenAPI、入力検証、`git`とCopilot runtimeの同梱を検証。モデルは呼ばない | Docker（[WSL2上での導入手順](#wsl2上でdocker-engineを使う)） | 約3分 |
+| large | [`tests/large`](./tests/large) | デプロイ済みHosted Agentを呼び、実装・レビュー・承認・ZIP返却までを検証 | Azure、モデル課金 | 約5分 |
 
 ```bash
 uv sync
@@ -278,14 +300,13 @@ uv sync
 # small
 uv run pytest tests/small
 
-# medium (Docker が無い環境では skip)
+# medium (Dockerが無い環境ではskip)
 uv run pytest tests/medium
 
-# large (課金が発生するため明示的に有効化。要 az login)
+# large (課金が発生するため明示的に有効化。要az login)
 RUN_LARGE_TESTS=1 uv run pytest tests/large
 ```
 
-ディレクトリの代わりに marker でも選択できます（例: `uv run pytest -m small`）。
-`uv run pytest` だけを実行すると small と medium が実行され、large は skip されます。
+ディレクトリの代わりにmarkerでも選択できます（例: `uv run pytest -m small`）。`uv run pytest`だけを実行するとsmallとmediumが実行され、largeはskipされます。
 
-large テストの呼び出し先は `HOSTED_AGENT_ENDPOINT` で変更できます。
+largeテストの呼び出し先は`HOSTED_AGENT_ENDPOINT`で変更できます。

@@ -1,3 +1,9 @@
+"""Invocations API としてワークフローエージェントをサーブするエントリポイント。
+
+Hosted Agent のコンテナでも、ローカルの `uv run --env-file .env python main.py` でも
+このファイルを起動する。
+"""
+
 from __future__ import annotations
 
 from typing import Any
@@ -14,6 +20,11 @@ from handson_maf_ghcp.agent import (
     run_invocation,
 )
 
+# ---------------------------------------------------------------------------
+# OpenAPI 定義
+# 入出力の Pydantic モデルからスキーマを作り、GET /invocations/docs/openapi.json で公開する。
+# モデル間の参照 ($defs) は OpenAPI の components.schemas に移して解決できるようにする。
+# ---------------------------------------------------------------------------
 input_schema = InvocationInput.model_json_schema(
     ref_template="#/components/schemas/{model}"
 )
@@ -60,11 +71,16 @@ OPENAPI_SPEC: dict[str, Any] = {
     "components": {"schemas": component_schemas},
 }
 
+# ---------------------------------------------------------------------------
+# サーバー
+# POST /invocations で実装仮説を受け取り、1 回の workflow 実行結果を JSON で返す。
+# ---------------------------------------------------------------------------
 app = InvocationAgentServerHost(openapi_spec=OPENAPI_SPEC)
 
 
 @app.invoke_handler
 async def invoke(request: Request) -> JSONResponse:
+    # 入力が不正なら workflow を動かさず 422 を返す。
     try:
         invocation = InvocationInput.from_payload(await request.json())
     except (TypeError, ValueError, ValidationError) as exc:
@@ -74,10 +90,12 @@ async def invoke(request: Request) -> JSONResponse:
             status_code=422,
         )
 
+    # 一時ワークスペースの作成から実装・レビュー・レポート作成までを 1 回実行する。
     result = await run_invocation(invocation)
     return JSONResponse(result.model_dump(mode="json"))
 
 
+# サーバー停止時に、全実行で共有している Azure の資格情報を閉じる。
 app.shutdown_handler(close_shared_resources)
 
 if __name__ == "__main__":
