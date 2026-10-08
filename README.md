@@ -119,15 +119,16 @@ workspace 外への書き込みは拒否されます。
 ```bash
 uv sync
 az login
-
-export FOUNDRY_RESOURCE_URL="https://mf-foundry-book.openai.azure.com"
-export FOUNDRY_PROJECT_ENDPOINT="https://mf-foundry-book.services.ai.azure.com/api/projects/first-project"
-export FOUNDRY_MODEL_DEPLOYMENT_NAME="gpt-6-luna"
-export AZURE_TOKEN_CREDENTIALS="AzureCliCredential"
+cp .env.example .env
 
 uv run python run.py \
   "Python で LRU キャッシュの実装パターンを検証する"
 ```
+
+`run.py` と pytest は起動時に `.env` を読み込みます（`python-dotenv`、dev 依存）。
+`.env` の値は既存の環境変数を上書きしません。Hosted Agent は `.env` を読まず、
+設定は `azure.yaml` から渡されます。`.env` は Git、コンテナ image、agent の
+デプロイパッケージのいずれにも含まれません。
 
 ZIP も取得する場合:
 
@@ -143,8 +144,11 @@ uv run python run.py --request request.json
 
 ## ローカル Invocations API
 
+`main.py` はコンテナでも使う本番用エントリポイントのため dotenv に依存させず、
+ローカルでは uv の `--env-file` で `.env` を渡します。
+
 ```bash
-uv run python main.py
+uv run --env-file .env python main.py
 ```
 
 ```bash

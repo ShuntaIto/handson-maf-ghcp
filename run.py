@@ -4,7 +4,12 @@ import argparse
 import asyncio
 from pathlib import Path
 
-from handson_maf_ghcp.agent import (
+from dotenv import load_dotenv
+
+# agent.py reads environment variables at import time, so load .env first.
+load_dotenv()
+
+from handson_maf_ghcp.agent import (  # noqa: E402
     InvocationInput,
     close_shared_resources,
     run_invocation,
