@@ -1,0 +1,30 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/Azure/azure-dev/main/schemas/v1.0/azure.yaml.json
+
+name: handson-maf-ghcp
+services:
+    first-project:
+        host: azure.ai.project
+        endpoint: https://mf-foundry-book.services.ai.azure.com/api/projects/first-project
+    implementation-hypothesis-agent:
+        project: .
+        host: azure.ai.agent
+        language: docker
+        docker:
+            remoteBuild: true
+        uses:
+            - first-project
+        env:
+            AZURE_AI_MODEL_DEPLOYMENT_NAME: ${AZURE_AI_MODEL_DEPLOYMENT_NAME}
+            AZURE_TOKEN_CREDENTIALS: ${AZURE_TOKEN_CREDENTIALS}
+        container:
+            resources:
+                cpu: "1"
+                memory: 2Gi
+        kind: hosted
+        name: implementation-hypothesis-agent
+        protocols:
+            - protocol: invocations
+              version: 2.0.0
+        startupCommand: python main.py
+infra:
+    provider: microsoft.foundry

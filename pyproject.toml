@@ -1,7 +1,7 @@
 [project]
 name = "handson-maf-ghcp"
 version = "0.1.0"
-description = "Add your description here"
+description = "A Foundry Hosted Agent that implements and validates one coding hypothesis."
 readme = "README.md"
 authors = [
     { name = "ShuntaIto", email = "shunta.ito@microsoft.com" }
@@ -15,11 +15,22 @@ dependencies = [
     "agent-framework-orchestrations>=1.2.0",
     "azure-identity>=1.25.3",
     "github-copilot-sdk>=1.0.11",
+    "pydantic>=2.13.5",
 ]
-
-[project.scripts]
-handson-maf-ghcp = "handson_maf_ghcp:main"
 
 [build-system]
 requires = ["uv_build>=0.12.19,<0.13.0"]
 build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "small: single process, no network, no model calls",
+    "medium: local container over localhost, requires Docker",
+    "large: deployed Hosted Agent, requires Azure and RUN_LARGE_TESTS=1",
+]
