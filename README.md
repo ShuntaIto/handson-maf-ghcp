@@ -131,6 +131,7 @@ ZIPには実装成果物を含め、内部用の`.git`、`__pycache__`、`.pytes
 | Project endpoint | `https://mf-foundry-book.services.ai.azure.com/api/projects/first-project` |
 | Model deployment | `gpt-6-luna` |
 | Model version | `2026-09-22` |
+| Global Standard capacity | `200` |
 
 ### インストールと設定
 
@@ -265,15 +266,19 @@ azd ai agent invoke implementation-hypothesis-agent --protocol invocations --new
 | --- | --- | --- | --- | --- |
 | small | [`tests/small`](./tests/small) | 単一プロセス内で入力モデル、一時workspace、ZIP、レビュー分岐、レポート整形を検証 | なし | 1秒未満 |
 | medium | [`tests/medium`](./tests/medium) | コンテナをbuild・起動し、localhost経由でreadiness、OpenAPI、入力検証、`git`とCopilot runtimeの同梱を検証。モデルは呼ばない | Docker | 約3分 |
-| large | [`tests/large`](./tests/large) | デプロイ済みHosted Agentを呼び、実装・レビュー・承認・ZIP返却までを検証 | Azure、モデル課金 | 約5分 |
+| large | [`tests/large`](./tests/large) | 実際のモデルを呼び、同じ実装仮説を`run.py`のローカル実行・ローカルコンテナ・デプロイ済みHosted Agentの3通りで実行して、実装・レビュー・承認・ZIP返却までを検証 | Azure、モデル課金、Docker | 今回の実行で約5分 |
 
 ```bash
 # small
 uv run pytest tests/small
 # medium (Dockerが無い環境ではskip)
 uv run pytest tests/medium
-# large (課金が発生するため明示的に有効化。要az login)
-RUN_LARGE_TESTS=1 uv run pytest tests/large
+# large (要az login。モデル課金が発生する)
+uv run pytest tests/large
 ```
 
-ディレクトリの代わりにmarkerでも選択できます（例: `uv run pytest -m small`）。`uv run pytest`だけを実行するとsmallとmediumが実行され、largeはskipされます。largeテストの呼び出し先は`HOSTED_AGENT_ENDPOINT`で変更できます。
+ディレクトリの代わりにmarkerでも選択できます（例: `uv run pytest -m small`）。`uv run pytest`だけを実行するとlargeを含むすべてのテストが実行され、モデル課金が発生します。
+
+largeのコンテナテストではコンテナ内に`az login`の資格情報が無いため、テストがホスト側に`az login`でトークンを発行する小さなエンドポイントを立て、Hosted Agentと同じManaged Identityの形式（`IDENTITY_ENDPOINT` / `IDENTITY_HEADER`）でコンテナに渡します。コンテナはhost networkで起動します。largeテストの呼び出し先は`HOSTED_AGENT_ENDPOINT`で変更できます。
+
+largeテストは同じ`gpt-6-luna`デプロイを複数回使います。3経路を並列実行した際にtoken rate limit（HTTP 429）に達したため、デプロイのGlobal Standard capacityを`10`から`200`に変更しました。テストは並列化せずに実行してください。

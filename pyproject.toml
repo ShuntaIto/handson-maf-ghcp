@@ -33,5 +33,5 @@ testpaths = ["tests"]
 markers = [
     "small: single process, no network, no model calls",
     "medium: local container over localhost, requires Docker",
-    "large: deployed Hosted Agent, requires Azure and RUN_LARGE_TESTS=1",
+    "large: calls the real model (local script, local container, Hosted Agent), requires Azure",
 ]
